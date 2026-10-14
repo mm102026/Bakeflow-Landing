@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bakeflow: every order in one place, every allergy flagged</title>
+<meta name="description" content="Bakeflow puts phone, email, message and walk-in orders into one list for small bakeries and cafes, and makes sure no allergy is ever missed.">
+<meta name="theme-color" content="#1f2a44">
+<style>
+:root{
+  --ink:#1f2a44; --ink-soft:#4a5570; --bg:#f3f5f9; --card:#ffffff; --hero:#1f2a44;
+  --butter:#f6d55c; --alert:#c8281f; --alert-bg:#fde8e6; --ok:#1d7a4d; --ok-bg:#e3f4ea;
+  --line:#d9deea; --on-dark:#f3f5f9;
+  --serif:Georgia,"Iowan Old Style","Palatino Linotype",serif;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ink:#eef1f8; --ink-soft:#b3bbd0; --bg:#131a2c; --card:#1c2540; --hero:#0c1220;
+    --line:#2f3a5c; --alert:#ff8a80; --alert-bg:#3d1e26; --ok:#7fe0a8; --ok-bg:#16352a;
+  }
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:1rem;line-height:1.45;
+  padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0);
+}
+h1,h2,h3{font-family:var(--sans);font-weight:800;line-height:1.08;letter-spacing:-.03em;margin:0 0 .45em}
+h1{font-size:clamp(2.2rem,10vw,3.8rem)}
+h2{font-size:clamp(1.5rem,6vw,2rem)}
+h3{font-size:1.05rem;letter-spacing:-.01em;margin-bottom:.2em}
+p{margin:0 0 .8em}
+.wrap{max-width:62rem;margin:0 auto;padding:0 1.1rem}
+section{padding:1.75rem 0}
+
+.btn{
+  display:inline-block;min-height:3rem;padding:.7rem 1.5rem;border-radius:999px;border:2px solid var(--ink);
+  font:700 1rem/1.4 var(--sans);text-decoration:none;text-align:center;cursor:pointer;
+  transition:transform .15s ease,box-shadow .15s ease;
+}
+.btn:hover{transform:translateY(-2px)}
+.btn:active{transform:translateY(1px)}
+.btn-primary{background:var(--butter);color:#1f2a44;border-color:var(--butter);box-shadow:0 3px 0 rgba(0,0,0,.25)}
+.btn-ghost{background:transparent;color:inherit}
+.btn:focus-visible,input:focus-visible{outline:3px solid var(--butter);outline-offset:3px}
+.btn-row{display:flex;flex-wrap:wrap;gap:.6rem;margin-top:1.2rem}
+.btn-row .btn{flex:1 1 10rem}
+
+/* hero: flour-dusted dark dough, with a piped scalloped edge */
+.hero{
+  position:relative;background-color:var(--hero);color:var(--on-dark);padding-bottom:2.2rem;margin-bottom:.9rem;
+  background-image:
+    radial-gradient(circle,rgba(246,213,92,.2) 1.5px,transparent 2px),
+    radial-gradient(circle,rgba(255,255,255,.09) 1px,transparent 1.6px);
+  background-size:47px 47px,31px 31px;background-position:0 0,17px 23px;
+}
+.hero::after{
+  content:"";position:absolute;left:0;right:0;bottom:-11px;height:12px;
+  background:radial-gradient(circle at 10px 0,var(--hero) 10px,transparent 10.5px) 0 0/20px 12px repeat-x;
+}
+.bar{display:flex;align-items:center;justify-content:space-between;padding:.8rem 0}
+.logo{font-weight:800;font-size:1.35rem;letter-spacing:-.04em;text-decoration:none;color:inherit}
+.logo span{color:var(--butter)}
+.lead{font-size:1.08rem;color:#d3d9e8;max-width:32rem;margin:0}
+.hero .btn-ghost{border-color:#6c789a}
+
+/* live order feed: the one moving moment */
+.feed-wrap{margin-top:1.5rem;max-width:25rem}
+.feed-head{display:flex;align-items:center;gap:.5rem;font-size:.85rem;font-weight:600;color:#d3d9e8;margin-bottom:.5rem}
+.dot{width:.55rem;height:.55rem;border-radius:50%;background:#6be39b;box-shadow:0 0 0 0 rgba(107,227,155,.7);animation:ping 2s infinite}
+@keyframes ping{70%{box-shadow:0 0 0 .6rem rgba(107,227,155,0)}100%{box-shadow:0 0 0 0 rgba(107,227,155,0)}}
+.feed{display:flex;flex-direction:column;gap:.5rem}
+.o{background:#fff;color:#1f2a44;border-radius:.9rem;overflow:hidden;font-size:.9rem;max-height:8rem}
+.o:nth-child(n+3){display:none}
+.o.new{animation:land .55s cubic-bezier(.2,.8,.2,1)}
+@keyframes land{from{max-height:0;opacity:0;transform:translateY(-.8rem) scale(.96)}to{max-height:8rem;opacity:1;transform:none}}
+.o-top{display:flex;align-items:center;gap:.5rem;padding:.55rem .8rem .1rem}
+.chip{background:#e9edf6;border-radius:999px;padding:.05rem .6rem;font-size:.75rem;font-weight:700}
+.when{margin-left:auto;color:#4a5570;font-size:.8rem}
+.o-items{padding:0 .8rem .45rem;color:#4a5570}
+.flag{padding:.4rem .8rem;font-weight:700;font-size:.82rem}
+.flag.alert{background:#c8281f;color:#fff}
+.o.new .flag.alert{animation:flash 1.2s ease-out}
+@keyframes flash{0%,35%{background:#ff5a4d}100%{background:#c8281f}}
+.flag.ok{background:#e3f4ea;color:#1d7a4d}
+
+/* problem: a messy pile of notes that tidies itself into one list */
+.problem-grid{display:grid;gap:1rem}
+.caption{font-size:1.02rem;color:var(--ink-soft);margin:.2rem 0 .8rem;min-height:3em}
+.tidy-btn{
+  min-height:2.6rem;padding:.4rem 1.1rem;border-radius:999px;border:2px solid var(--ink);background:transparent;
+  color:var(--ink);font:700 .95rem var(--sans);cursor:pointer;transition:transform .15s ease;
+}
+.tidy-btn:hover{transform:translateY(-2px)}
+.tidy-btn:focus-visible{outline:3px solid var(--butter);outline-offset:3px}
+.pile{position:relative;height:16.4rem;max-width:26rem;transition:height .9s ease}
+.pile.tidy{height:15rem}
+.it{
+  position:absolute;left:var(--x);top:var(--y);width:var(--w);height:4.6rem;transform:rotate(var(--r));
+  border-radius:.5rem;background:var(--m-bg);color:var(--m-fg);box-shadow:0 4px 10px rgba(0,0,0,.18);
+  transition:left .9s cubic-bezier(.3,1.1,.4,1) var(--d),top .9s cubic-bezier(.3,1.1,.4,1) var(--d),width .9s ease var(--d),
+    height .9s ease var(--d),transform .9s cubic-bezier(.3,1.1,.4,1) var(--d),background-color .6s ease var(--d),
+    border-radius .6s ease var(--d),box-shadow .6s ease var(--d);
+}
+.it .q{
+  position:absolute;inset:0;display:flex;align-items:center;padding:.5rem .8rem;font-family:var(--serif);
+  font-style:italic;font-size:.9rem;line-height:1.3;transition:opacity .35s ease var(--d);
+}
+.it .r{
+  position:absolute;inset:0;padding:.35rem .8rem;display:flex;flex-direction:column;justify-content:center;gap:.1rem;
+  opacity:0;transition:opacity .4s ease;font-size:.85rem;color:var(--ink);
+}
+.r .top{display:flex;align-items:center;gap:.5rem}
+.r .rc{background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:0 .55rem;font-size:.72rem;font-weight:700}
+.r .fl{margin-left:auto;border-radius:999px;padding:0 .6rem;font-size:.72rem;font-weight:800}
+.r .fl.a{background:#c8281f;color:#fff}
+.r .fl.n{background:var(--ok-bg);color:var(--ok)}
+.r .sub{color:var(--ink-soft);font-size:.82rem}
+.it.sticky-note{--m-bg:#f6d55c;--m-fg:#3a2f00}
+.it.sticky-note::after{
+  content:"";position:absolute;left:50%;top:-.6rem;width:3.4rem;height:1.1rem;margin-left:-1.7rem;
+  background:rgba(255,255,255,.55);transform:rotate(-3deg);transition:opacity .4s ease;
+}
+.it.bubble{--m-bg:#cfe0ff;--m-fg:#14264d;border-radius:1.1rem 1.1rem 1.1rem .2rem}
+.it.voice{--m-bg:#3a4670;--m-fg:#fff}
+.it.mail{--m-bg:#ffffff;--m-fg:#1f2a44}
+.pile.tidy .it{
+  left:0;top:calc(var(--i) * 3.75rem);width:100%;height:3.35rem;transform:none;background:var(--card);
+  border-radius:1rem;box-shadow:none;outline:1px solid var(--line);outline-offset:-1px;
+}
+.pile.tidy .it::after{opacity:0}
+.pile.tidy .q{opacity:0}
+.pile.tidy .r{opacity:1;transition-delay:.55s}
+
+/* how it works: a static timeline with icon tiles */
+.steps{list-style:none;counter-reset:s;margin:1rem 0 0;padding:0;display:grid;gap:.8rem;position:relative}
+.steps::before,.steps::after{content:"";position:absolute;left:2.4rem;top:2rem;width:4px;border-radius:2px;margin-left:-2px}
+.steps::before{bottom:2rem;background:var(--line)}
+.steps::after{bottom:2rem;background:var(--butter)}
+.steps li{
+  counter-increment:s;position:relative;z-index:1;background:var(--card);border:1px solid var(--line);
+  border-radius:1.2rem;padding:.9rem 1rem .9rem 5.2rem;min-height:4.9rem;border-color:var(--butter);
+}
+.steps li::before{
+  content:counter(s);position:absolute;z-index:2;left:3.35rem;top:.55rem;width:1.5rem;height:1.5rem;border-radius:50%;
+  background:var(--ink);color:var(--bg);display:grid;place-items:center;font:800 .8rem var(--sans);border:2px solid var(--card);
+}
+.tile{
+  position:absolute;left:.9rem;top:.9rem;width:3.1rem;height:3.1rem;border-radius:1rem;background:var(--butter);color:#1f2a44;
+  display:grid;place-items:center;box-shadow:0 3px 0 rgba(0,0,0,.18);
+}
+.tile.red{background:#c8281f;color:#fff}
+.tile svg{width:2rem;height:2rem;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+.steps p{margin:0;color:var(--ink-soft);font-size:.95rem}
+.steps strong{color:var(--alert)}
+
+
+/* join: scalloped top edge, stitched price card */
+.join{position:relative;background:var(--card);margin-top:1.4rem;padding-top:2.2rem}
+.join::before{
+  content:"";position:absolute;left:0;right:0;top:-11px;height:12px;
+  background:radial-gradient(circle at 10px 12px,var(--card) 10px,transparent 10.5px) 0 0/20px 12px repeat-x;
+}
+.join-grid{display:grid;gap:1.4rem}
+.price-card{border:2px dashed var(--butter);border-radius:1.3rem;padding:1rem 1.2rem;align-self:start}
+.price-card h2{margin-bottom:.3em}
+.amount{font:800 2.6rem/1 var(--sans);letter-spacing:-.04em}
+.amount small{font:500 .95rem var(--sans);color:var(--ink-soft);letter-spacing:0}
+.perks{padding-left:1.1rem;margin:.6rem 0 0;color:var(--ink-soft)}
+form{max-width:28rem}
+label{display:block;font-weight:600;margin-bottom:.25rem;font-size:.95rem}
+input[type=email],input[type=text]{
+  width:100%;min-height:2.9rem;padding:.6rem 1rem;border-radius:999px;border:2px solid var(--line);
+  background:var(--bg);color:var(--ink);font:inherit;margin-bottom:.7rem;
+}
+.err{color:var(--alert);font-weight:600;min-height:1.2em;margin:-.3rem 0 .5rem;font-size:.95rem}
+/* thank-you popup */
+dialog.thanks{
+  width:calc(100% - 2.2rem);max-width:22rem;border:2px solid var(--butter);border-radius:1.5rem;padding:1.6rem 1.4rem 1.4rem;
+  background:var(--card);color:var(--ink);text-align:center;box-shadow:0 1rem 3rem rgba(0,0,0,.35);
+}
+dialog.thanks[open]{animation:popin .35s cubic-bezier(.3,1.4,.5,1)}
+dialog.thanks::backdrop{background:rgba(10,16,32,.65)}
+@keyframes popin{from{transform:scale(.9);opacity:0}to{transform:none;opacity:1}}
+.thanks .tick{
+  width:3.4rem;height:3.4rem;border-radius:50%;background:var(--butter);color:#1f2a44;display:grid;place-items:center;
+  margin:0 auto .8rem;box-shadow:0 3px 0 rgba(0,0,0,.18);
+}
+.thanks .tick svg{width:1.9rem;height:1.9rem;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.thanks h3{font-size:1.3rem;margin-bottom:.4em}
+.thanks p{color:var(--ink-soft);margin:0 0 1.1rem}
+footer{padding:.9rem 0 5rem;color:var(--ink-soft);font-size:.85rem;background:var(--card)}
+
+/* sticky call to action, appears once the hero buttons scroll away */
+.sticky{
+  position:fixed;left:0;right:0;bottom:0;z-index:5;display:flex;gap:.6rem;justify-content:center;
+  padding:.6rem 1rem calc(.6rem + env(safe-area-inset-bottom,0px));background:var(--hero);
+  transform:translateY(110%);transition:transform .3s ease;
+}
+.sticky.show{transform:none}
+.sticky .btn{min-height:2.7rem;padding:.4rem 1.2rem;flex:1 1 0;max-width:14rem;color:var(--on-dark);border-color:#6c789a}
+.sticky .btn-primary{color:#1f2a44;border-color:var(--butter)}
+
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *,*::before{animation:none!important;transition:none!important}
+}
+@media (min-width:48rem){
+  .hero .wrap.grid{display:grid;grid-template-columns:1.2fr 1fr;gap:3rem;align-items:center}
+  .feed-wrap{margin-top:0;justify-self:center}
+  .o:nth-child(n+3){display:block}
+  .problem-grid{grid-template-columns:1fr 1fr;gap:3rem;align-items:center}
+  .pile{justify-self:center;width:100%}
+  .steps{grid-template-columns:repeat(3,1fr);gap:1rem}
+  .steps::before,.steps::after{top:2.45rem;left:2.45rem;height:4px;margin:-2px 0 0;bottom:auto}
+  .steps::before{width:calc(66.667% + .667rem)}
+  .steps::after{height:4px;width:calc(66.667% + .667rem)}
+  .steps li{padding:4.9rem 1rem 1rem}
+  .steps li::before{left:3.4rem;top:.6rem}
+  .tile{left:.9rem;top:.9rem}
+  .join-grid{grid-template-columns:1fr 1fr;gap:3rem}
+  .btn-row .btn{flex:0 0 auto}
+}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="bar">
+      <a class="logo" href="#top">Bake<span>flow</span></a>
+    </div>
+  </div>
+  <div class="wrap grid" id="top">
+    <div>
+      <h1>Every order in one place. Every allergy seen.</h1>
+      <p class="lead">One simple list for phone, email, message and walk-in orders, with allergies in red where nobody can miss them.</p>
+      <div class="btn-row" id="heroCta">
+        <a class="btn btn-primary" href="https://mm102026.github.io/K-C-Ordering-Hub/" target="_blank" rel="noopener">Try the demo</a>
+        <a class="btn btn-ghost" href="#waitlist">Join the waiting list</a>
+      </div>
+    </div>
+    <div class="feed-wrap" aria-hidden="true">
+      <div class="feed-head"><span class="dot"></span>Orders arriving now</div>
+      <div class="feed" id="feed"></div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section>
+    <div class="wrap problem-grid">
+      <div>
+        <h2>Sound familiar?</h2>
+        <p class="caption" id="caption" aria-live="polite">Four places to check. One tired baker, piecing it together at 10pm.</p>
+        <button class="tidy-btn" id="tidyBtn" type="button">Tidy it up</button>
+      </div>
+      <div class="pile" id="pile" role="group" aria-label="Orders scattered across notes, voicemail, messages and email">
+        <div class="it sticky-note" style="--x:2%;--y:.4rem;--w:64%;--r:-4deg;--i:0;--d:0s">
+          <div class="q">“The order was on a sticky note. The sticky note is gone.”</div>
+          <div class="r" aria-hidden="true"><div class="top"><span class="rc">Phone</span><b>Aoife</b><span class="fl n">No allergies</span></div><div class="sub">Birthday cake, 12 slices</div></div>
+        </div>
+        <div class="it bubble" style="--x:30%;--y:4.4rem;--w:68%;--r:3deg;--i:1;--d:.1s">
+          <div class="q">“She said her son can't have nuts. Did I tell the kitchen?”</div>
+          <div class="r" aria-hidden="true"><div class="top"><span class="rc">Message</span><b>Ciara</b><span class="fl a">ALLERGY: nuts</span></div><div class="sub">24 cupcakes, Sat 10:30</div></div>
+        </div>
+        <div class="it voice" style="--x:0%;--y:8.8rem;--w:66%;--r:-2.5deg;--i:2;--d:.2s">
+          <div class="q">Voicemail, 9:47pm: “Can you add 12 scones for Saturday?”</div>
+          <div class="r" aria-hidden="true"><div class="top"><span class="rc">Phone</span><b>Dan</b><span class="fl n">No allergies</span></div><div class="sub">12 cheese scones, added</div></div>
+        </div>
+        <div class="it mail" style="--x:26%;--y:11.6rem;--w:72%;--r:4deg;--i:3;--d:.3s">
+          <div class="q">Email: “So sorry, we've had to move the date!”</div>
+          <div class="r" aria-hidden="true"><div class="top"><span class="rc">Email</span><b>Priya</b><span class="fl n">No allergies</span></div><div class="sub">Catering moved to Fri 08:00</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section style="padding-top:0">
+    <div class="wrap">
+      <h2>How it works</h2>
+      <ol class="steps" id="steps">
+        <li>
+          <span class="tile" aria-hidden="true"><svg viewBox="0 0 48 48"><rect x="8" y="6" width="26" height="34" rx="4"/><path class="dr" pathLength="1" d="M14 16h14"/><path class="dr dr2" pathLength="1" d="M14 23h14"/><path class="dr dr3" pathLength="1" d="M14 30h7"/><path d="M31 39l9-9 3 3-9 9-4 1z"/></svg></span>
+          <h3>Write it down once</h3><p>Any channel, under a minute: who, what, when, allergies.</p>
+        </li>
+        <li>
+          <span class="tile" aria-hidden="true"><svg viewBox="0 0 48 48"><rect x="6" y="10" width="36" height="31" rx="5"/><path d="M6 19h36M15 5v8M33 5v8"/><rect class="blk" x="12" y="25" width="7" height="6" rx="2"/><rect class="blk" x="21" y="25" width="7" height="6" rx="2"/><rect class="blk" x="30" y="25" width="7" height="6" rx="2"/></svg></span>
+          <h3>See the whole week</h3><p>Every order in one list, sorted by pickup time.</p>
+        </li>
+        <li>
+          <span class="tile red" aria-hidden="true"><svg viewBox="0 0 48 48"><path class="shield" d="M24 5l15 5v11c0 10-6 17-15 21C15 38 9 31 9 21V10z"/><path class="dr" pathLength="1" d="M16 24l6 6 11-12"/></svg></span>
+          <h3>Bake with confidence</h3><p>Allergies show in red, and <strong>an order can't be saved until the allergy question is answered.</strong></p>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="join" id="waitlist">
+    <div class="wrap join-grid">
+      <div class="price-card">
+        <h2>One simple price</h2>
+        <div class="amount">€19 <small>per month</small></div>
+        <ul class="perks">
+          <li>Unlimited orders, every channel</li>
+          <li>Allergy flags on every order</li>
+          <li>Cancel any time</li>
+        </ul>
+      </div>
+      <div>
+        <h2>Join the waiting list</h2>
+        <form id="wl" novalidate>
+          <label for="shop">Bakery or cafe name</label>
+          <input id="shop" name="shop" type="text" autocomplete="organization">
+          <label for="email">Email address</label>
+          <input id="email" name="email" type="email" autocomplete="email" inputmode="email" required>
+          <div class="err" id="err" role="alert"></div>
+          <button class="btn btn-primary" type="submit" style="width:100%">Join the waiting list</button>
+        </form>
+        <dialog class="thanks" id="thanks" aria-labelledby="thanksTitle">
+          <div class="tick" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+          <h3 id="thanksTitle">Thanks for joining our waiting list!</h3>
+          <p id="thanksMsg">We'll be in touch soon with more details.</p>
+          <button class="btn btn-primary" id="thanksClose" type="button" style="width:100%">Got it</button>
+        </dialog>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer><div class="wrap">Bakeflow. Made for small bakeries and cafes.</div></footer>
+
+<div class="sticky" id="sticky">
+  <a class="btn btn-primary" href="https://mm102026.github.io/K-C-Ordering-Hub/" target="_blank" rel="noopener">Try the demo</a>
+  <a class="btn btn-ghost" href="#waitlist">Waiting list</a>
+</div>
+
+<script>
+(function () {
+  /* Sample orders for the hero feed. Made-up names, no brands. */
+  var orders = [
+    {ch:"Phone",n:"Aoife",t:"Sat 10:30",i:"Birthday cake, 12 slices",a:"Severe nut allergy"},
+    {ch:"Email",n:"Daniel",t:"Fri 08:00",i:"Catering: 40 sausage rolls",a:null},
+    {ch:"Message",n:"Priya",t:"Sat 09:15",i:"Gluten-free box of 6",a:"Coeliac: gluten-free only"},
+    {ch:"Walk-in",n:"Tom",t:"Today 16:00",i:"Lemon drizzle, whole",a:null},
+    {ch:"Message",n:"Niamh",t:"Sun 11:00",i:"Brunch platter for 8",a:"Dairy allergy"},
+    {ch:"Phone",n:"Seán",t:"Fri 17:30",i:"24 cupcakes",a:"Egg allergy"}
+  ];
+  var feed = document.getElementById('feed');
+  var next = 0;
+  var still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function card(o, isNew) {
+    var d = document.createElement('div');
+    d.className = 'o' + (isNew ? ' new' : '');
+    var top = document.createElement('div'); top.className = 'o-top';
+    var chip = document.createElement('span'); chip.className = 'chip'; chip.textContent = o.ch;
+    var nm = document.createElement('b'); nm.textContent = o.n;
+    var wh = document.createElement('span'); wh.className = 'when'; wh.textContent = o.t;
+    top.appendChild(chip); top.appendChild(nm); top.appendChild(wh);
+    var it = document.createElement('div'); it.className = 'o-items'; it.textContent = o.i;
+    var fl = document.createElement('div');
+    fl.className = 'flag ' + (o.a ? 'alert' : 'ok');
+    fl.textContent = o.a ? 'ALLERGY: ' + o.a : 'Allergies checked: none';
+    d.appendChild(top); d.appendChild(it); d.appendChild(fl);
+    return d;
+  }
+  function add(isNew) {
+    feed.insertBefore(card(orders[next % orders.length], isNew), feed.firstChild);
+    next++;
+    while (feed.children.length > 3) feed.removeChild(feed.lastChild);
+  }
+  add(false); add(false); add(false);
+  if (!still) setInterval(function () { add(true); }, 3800);
+
+  /* Sticky call to action: show when hero buttons and sign-up form are both off screen */
+  var bar = document.getElementById('sticky');
+  if ('IntersectionObserver' in window) {
+    var heroSeen = true, formSeen = false;
+    var update = function () { bar.classList.toggle('show', !heroSeen && !formSeen); };
+    new IntersectionObserver(function (e) { heroSeen = e[0].isIntersecting; update(); }).observe(document.getElementById('heroCta'));
+    new IntersectionObserver(function (e) { formSeen = e[0].isIntersecting; update(); }).observe(document.getElementById('waitlist'));
+  }
+
+  /* Problem: the messy pile tidies itself into one list when it scrolls into view */
+  var pile = document.getElementById('pile');
+  var tidyBtn = document.getElementById('tidyBtn');
+  var caption = document.getElementById('caption');
+  var messyText = 'Four places to check. One tired baker, piecing it together at 10pm.';
+  var tidyText = 'One list. Allergy in red. Nothing lost.';
+  function setTidy(on) {
+    pile.classList.toggle('tidy', on);
+    caption.textContent = on ? tidyText : messyText;
+    tidyBtn.textContent = on ? 'Show the mess again' : 'Tidy it up';
+  }
+  tidyBtn.addEventListener('click', function () { setTidy(!pile.classList.contains('tidy')); });
+  if (!still && 'IntersectionObserver' in window) {
+    var tidied = false;
+    new IntersectionObserver(function (e, obs) {
+      if (e[0].isIntersecting && !tidied) {
+        tidied = true; obs.disconnect();
+        setTimeout(function () { if (!pile.classList.contains('tidy')) setTidy(true); }, 1600);
+      }
+    }, {threshold: 0.6}).observe(pile);
+  }
+
+  /* Waiting list: never sends data anywhere. It only opens a thank-you popup. */
+  var form = document.getElementById('wl');
+  var thanks = document.getElementById('thanks');
+  var thanksMsg = document.getElementById('thanksMsg');
+  var err = document.getElementById('err');
+  var email = document.getElementById('email');
+  var shop = document.getElementById('shop');
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    if (!/^\S+@\S+\.\S+$/.test(email.value.trim())) {
+      err.textContent = 'Please enter an email address like name@example.com.';
+      email.focus();
+      return;
+    }
+    err.textContent = '';
+    var name = shop.value.trim();
+    thanksMsg.textContent = (name ? 'Great to have ' + name + ' on board. ' : '') + "We'll be in touch soon with more details.";
+    form.reset();
+    if (thanks.showModal) { thanks.showModal(); } else { thanks.setAttribute('open', ''); }
+  });
+  function closeThanks() {
+    if (thanks.close) { thanks.close(); } else { thanks.removeAttribute('open'); }
+  }
+  document.getElementById('thanksClose').addEventListener('click', closeThanks);
+  thanks.addEventListener('click', function (e) { if (e.target === thanks) closeThanks(); });
+  })();
+</script>
+</body>
+</html>
